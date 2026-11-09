@@ -12,10 +12,10 @@ ___
 
 Here’s what each button does!
 
-SW1: Same function as up arrow key on keyboard
-SW2: Same function as down arrow key on keyboard
-SW3: Same function as left arrow key on keyboard
-SW4: Same function as right arrow key on keyboard
-SW5: Same function as volume up key on keyboard
-SW6: Same function as volume down key on keyboard
-SW7: Same function as mute key on keyboard 
+* SW1: Same function as up arrow key on keyboard
+* SW2: Same function as down arrow key on keyboard
+* SW3: Same function as left arrow key on keyboard
+* SW4: Same function as right arrow key on keyboard
+* SW5: Same function as volume up key on keyboard
+* SW6: Same function as volume down key on keyboard
+* SW7: Same function as mute key on keyboard 

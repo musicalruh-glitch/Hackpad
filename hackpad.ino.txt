@@ -1,0 +1,108 @@
+#include <Wire.h>
+#include <Adafruit_GFX.h>
+#include <Adafruit_SSD1306.h>
+#include <BleKeyboard.h>
+
+// OLED display specs (0.91-inch 128x32)
+#define SCREEN_WIDTH 128
+#define SCREEN_HEIGHT 32
+#define OLED_RESET    -1
+Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
+
+// Initialize Bluetooth Keyboard name and manufacturer
+BleKeyboard bleKeyboard("Hackpad", "CustomMaker", 100);
+
+// Define pin numbers for my 7 switches 
+// (Adjust these pin numbers to match the exact GPIO pins you wired on my XIAO)
+const int switchPins[7] = {0, 1, 2, 3, 4, 5, 6}; 
+
+// Track previous button states for debounce / press detection
+bool lastState[7] = {HIGH, HIGH, HIGH, HIGH, HIGH, HIGH, HIGH};
+
+void setup() {
+  Serial.begin(115200);
+
+  // Initialize OLED display (I2C address 0x3C is standard for 0.91" screens)
+  if(!display.begin(SSD1306_SWITCHCAPVCC, 0x3C)) {
+    Serial.println(F("SSD1306 allocation failed"));
+    while(1);
+  }
+
+  // Clear display and show initial boot screen
+  display.clearDisplay();
+  display.setTextSize(1);
+  display.setTextColor(SSD1306_WHITE);
+  display.setCursor(0, 0);
+  display.println(F("Hackpad Booting..."));
+  display.display();
+  delay(1000);
+
+  // Set up switch pins with internal pull-up resistors 
+  // (Assumes switches pull the pin to GND when pressed)
+  for(int i = 0; i < 7; i++) {
+    pinMode(switchPins[i], INPUT_PULLUP);
+  }
+
+  // Start the Bluetooth Keyboard service
+  bleKeyboard.begin();
+}
+
+void loop() {
+  // Update OLED based on connection status
+  display.clearDisplay();
+  display.setCursor(0, 0);
+  display.setTextSize(1);
+  display.println(F("--- HACKPAD ---"));
+  
+  display.setCursor(0, 16);
+  if (bleKeyboard.isConnected()) {
+    display.println(F("Status: Connected :)"));
+  } else {
+    display.println(F("Status: Disconnected"));
+  }
+  display.display();
+
+  // Only read keys if Bluetooth is connected to the PC
+  if (bleKeyboard.isConnected()) {
+    for (int i = 0; i < 7; i++) {
+      bool currentState = digitalRead(switchPins[i]);
+
+      // Check if button was just pressed (transition from HIGH to LOW)
+      if (currentState == LOW && lastState[i] == HIGH) {
+        executeKeyAction(i);
+        delay(50); // Simple debounce delay
+      }
+      lastState[i] = currentState;
+    }
+  }
+  
+  // Small delay to prevent hammering the CPU
+  delay(20);
+}
+
+// Function that maps switch index (0 to 6) to its specific action
+void executeKeyAction(int keyIndex) {
+  switch (keyIndex) {
+    case 0: // SW1: Up Arrow
+      bleKeyboard.write(KEY_UP_ARROW);
+      break;
+    case 1: // SW2: Down Arrow
+      bleKeyboard.write(KEY_DOWN_ARROW);
+      break;
+    case 2: // SW3: Left Arrow
+      bleKeyboard.write(KEY_LEFT_ARROW);
+      break;
+    case 3: // SW4: Right Arrow
+      bleKeyboard.write(KEY_RIGHT_ARROW);
+      break;
+    case 4: // SW5: Volume Up
+      bleKeyboard.write(KEY_MEDIA_VOLUME_UP);
+      break;
+    case 5: // SW6: Volume Down
+      bleKeyboard.write(KEY_MEDIA_VOLUME_DOWN);
+      break;
+    case 6: // SW7: Mute
+      bleKeyboard.write(KEY_MEDIA_MUTE);
+      break;
+  }
+}
